@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { GetUnixTimestamp } = require('../../core/common');
 const mongoose = require("mongoose");
+const authMiddleware = require('../../core/auth');
 
 /* sign up user */
 user.post('/signup', (req, res) => {
@@ -127,6 +128,12 @@ user.post('/reset/password', (req, res) => {
             }
         }
     });
+});
+
+
+/* get user details */
+user.get('/details', authMiddleware, (req, res) => {
+    res.status(200).send({success: true, data: req.user});
 });
 
 module.exports = user;
