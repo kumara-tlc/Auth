@@ -9,16 +9,21 @@ const authMiddleware = require('../../core/auth');
 project.post('/', authMiddleware, async (req, res) => {
     try {
         let requestData = req.body;
-        requestData["additional_attributes"]["created_by"] = req.user._id;
 
-        const result = await projectCollection.create(requestData);
+        const result = await projectCollection.create({
+            ...requestData,
+            additional_attributes: {
+                created_by: req.user._id,
+                updated_by: req.user._id
+            }
+        });
         if (!!!result) {
             return res.status(400).send({success: false, message: "Failed to Create Project"});
         }
 
         return res.status(200).send({success: true, message: "success"});
 
-    } catch(err) {
+    } catch(error) {
         console.log(error);
         return res.status(400).send({
             success: false,
@@ -36,7 +41,7 @@ project.get('/:id', authMiddleware, async (req, res) => {
             return res.status(400).send({success: false, message: "Failed to Get Project"});
         }
         return res.status(200).send({success: true, message: "success", data: result});
-    } catch (err) {
+    } catch (error) {
         console.log(error);
         return res.status(400).send({
             success: false,
@@ -68,7 +73,7 @@ project.put('/:id', authMiddleware, async (req, res) => {
         let { id } = req.params;
         let existingData = await projectCollection.findOne({_id: id, "additional_attributes.is_deleted" : false});
 
-        if (!!existingData) {
+        if (!!!existingData) {
             return res.status(400).send({success: false, message: "Failed to Get Project"});
         }
 
@@ -78,17 +83,17 @@ project.put('/:id', authMiddleware, async (req, res) => {
             existingData[key] = val;
         })
 
-        requestData["additional_attributes"]["updated_by"] = req.user._id;
-        requestData["additional_attributes"]["updated_at"] = GetUnixTimestamp();
+        existingData["additional_attributes"]["updated_by"] = req.user._id;
+        existingData["additional_attributes"]["updated_at"] = GetUnixTimestamp();
 
-        const result = await projectCollection.updateOne({_id: id, "additional_attributes.is_deleted" : false}, requestData);
+        const result = await projectCollection.updateOne({_id: id, "additional_attributes.is_deleted" : false}, existingData);
         if (!!!result) {
             return res.status(400).send({success: false, message: "Failed to Update Project"});
         }
 
         return res.status(200).send({success: true, message: "success"});
 
-    } catch(err) {
+    } catch(error) {
         console.log(error);
         return res.status(400).send({
             success: false,
@@ -104,7 +109,7 @@ project.delete('/:id', authMiddleware, async (req, res) => {
         let { id } = req.params;
         let existingData = await projectCollection.findOne({_id: id, "additional_attributes.is_deleted" : false});
 
-        if (!!existingData) {
+        if (!!!existingData) {
             return res.status(400).send({success: false, message: "Failed to Get Project"});
         }
 
@@ -112,12 +117,12 @@ project.delete('/:id', authMiddleware, async (req, res) => {
         existingData.save();
 
         if (!!!existingData) {
-            return res.status(400).send({success: false, message: "Failed to Update Project"});
+            return res.status(400).send({success: false, message: "Failed to Delete Project"});
         }
 
         return res.status(200).send({success: true, message: "success"});
 
-    } catch(err) {
+    } catch(error) {
         console.log(error);
         return res.status(400).send({
             success: false,
