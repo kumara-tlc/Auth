@@ -2,6 +2,7 @@ const express = require('express');
 const user = express.Router();
 const userCollection = require('../../models/user');
 const credCollection = require('../../models/credential');
+const settingsCollection = require('../../models/settings');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { GetUnixTimestamp } = require('../../core/common');
@@ -35,12 +36,14 @@ user.post('/signup', (req, res) => {
                 res.status(400).send({success: false, message: "Failed to Create User"});
             } else {
                 // hash password and create user
-                let hashedPassword = await bcrypt.hash(password, 10);
-                let credResult = await credCollection.create([{userId: result.pop()._id, password: hashedPassword, hint: hint}], {session});
+                const hashedPassword = await bcrypt.hash(password, 10);
+                const userId = result.pop()._id;
+                const credResult = await credCollection.create([{userId: userId, password: hashedPassword, hint: hint}], {session});
+                const settingsResult = await settingsCollection.create([{userId: userId}], {session})
                 
-                if (!!!credResult || credResult.length === 0) {
+                if (!!!credResult || credResult.length === 0 || !!!settingsResult || settingsResult.length === 0) {
                     await session.abortTransaction();
-                    res.status(400).send({success: false, message: "Failed to Create Credential Request"});
+                    res.status(400).send({success: false, message: "Failed to Create Credential or System Settings Request"});
                 } else {
                     await session.commitTransaction();
                     res.status(200).send({success: true, message: "success"});
@@ -135,5 +138,54 @@ user.post('/reset/password', (req, res) => {
 user.get('/details', authMiddleware, (req, res) => {
     res.status(200).send({success: true, data: req.user});
 });
+
+/* get user system settings */
+user.get('/system/settings', authMiddleware, async (req, res) => {
+    try{
+        const settingsData = await settingsCollection.findOne({ userId: req.user._id, "additional_attributes.is_deleted" : false });
+        return res.status(200).send({success: true, data: settingsData});
+    } catch (error) {
+        console.log(error);
+        return res.status(400).send({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+
+/* update user system settings */
+user.put('/system/settings', authMiddleware, async (req, res) => {
+    try{
+        let existingData = await settingsCollection.findOne({ userId: req.user._id, "additional_attributes.is_deleted" : false });
+
+        if(!existingData){
+            return res.status(400).send({ success: false, message: "Settings Data Not Found" });
+        }
+
+        const requestData = req.body;
+
+        Object.entries(requestData).map((val) => {
+            existingData[val[0]] = val[1];
+        })
+
+        existingData["additional_attributes"]["updated_by"] = req.user._id;
+        existingData["additional_attributes"]["updated_at"] = GetUnixTimestamp();
+
+        const result = await settingsCollection.updateOne({userId: req.user._id, "additional_attributes.is_deleted" : false}, existingData);
+        if (!!!result) {
+            return res.status(400).send({success: false, message: "Failed to Update Settings"});
+        }
+
+        return res.status(200).send({success: true, message: "success"});
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).send({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+
 
 module.exports = user;
