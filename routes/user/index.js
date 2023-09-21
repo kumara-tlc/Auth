@@ -28,9 +28,10 @@ user.post('/signup', (req, res) => {
         }
 
         const session = await mongoose.startSession();
+        const uniqueId = GenerateUniqueId();
         try {
             session.startTransaction();
-            requestData._id = GenerateUniqueId();
+            requestData._id = uniqueId;
             const timeStamp = GetUnixTimestamp();
             requestData.additional_attributes = {
                 created_at: timeStamp,
@@ -44,13 +45,13 @@ user.post('/signup', (req, res) => {
                 // hash password and create user
                 const hashedPassword = await bcrypt.hash(password, 10);
                 const userId = result.pop()._id;
-                const credResult = await credCollection.create([{userId: userId, password: hashedPassword, hint: hint, 
+                const credResult = await credCollection.create([{_id: uniqueId, userId: userId, password: hashedPassword, hint: hint,
                                                                  additional_attributes: {
                                                                      created_at: timeStamp,
                                                                      updated_at: timeStamp
                                                                  }
                                                                 }], {session});
-                const settingsResult = await settingsCollection.create([{userId: userId, 
+                const settingsResult = await settingsCollection.create([{_id: uniqueId, userId: userId,
                                                                          additional_attributes: {
                                                                              created_at: timeStamp,
                                                                              updated_at: timeStamp
@@ -74,7 +75,7 @@ user.post('/signup', (req, res) => {
             });
         }
         finally {
-            session.endSession();
+            await session.endSession();
         }
     });
 });
@@ -95,7 +96,7 @@ user.post('/login', (req, res) => {
                 return res.status(401).json({success: false, message: 'Invalid email or password.' });
             }
 
-            credCollection.findOne({ userId: user._id }).then(async (credRes) => {
+            credCollection.findOne({ userId: user["_id"] }).then(async (credRes) => {
                 if (!!!credRes) {
                     return res.status(401).json({success: false, message: 'Invalid email or password.' });
                 }

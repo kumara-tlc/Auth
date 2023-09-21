@@ -3,7 +3,6 @@ const item = express.Router();
 const itemCollection = require('../../models/item');
 const projectCollection = require('../../models/project');
 const { GetUnixTimestamp, GenerateUniqueId } = require('../../core/common');
-const mongoose = require("mongoose");
 const authMiddleware = require('../../core/auth');
 
 /* create item */
@@ -21,7 +20,7 @@ item.post('/', authMiddleware, async (req, res) => {
 
         const result = await itemCollection.create({
             ...requestData,
-            _id: GenerateUniqueId();
+            _id: GenerateUniqueId(),
             additional_attributes: {
                 created_by: req.user._id,
                 created_at: timeStamp,
