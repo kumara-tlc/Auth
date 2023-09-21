@@ -5,7 +5,7 @@ const credCollection = require('../../models/credential');
 const settingsCollection = require('../../models/settings');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { GetUnixTimestamp } = require('../../core/common');
+const { GetUnixTimestamp, GenerateUniqueId } = require('../../core/common');
 const mongoose = require("mongoose");
 const authMiddleware = require('../../core/auth');
 
@@ -30,6 +30,12 @@ user.post('/signup', (req, res) => {
         const session = await mongoose.startSession();
         try {
             session.startTransaction();
+            requestData._id = GenerateUniqueId();
+            const timeStamp = GetUnixTimestamp();
+            requestData.additional_attributes = {
+                created_at: timeStamp,
+                updated_at: timeStamp
+            };
             let result = await userCollection.create([requestData], {session});
             if (!!!result || result.length === 0) {
                 await session.abortTransaction();
@@ -38,8 +44,17 @@ user.post('/signup', (req, res) => {
                 // hash password and create user
                 const hashedPassword = await bcrypt.hash(password, 10);
                 const userId = result.pop()._id;
-                const credResult = await credCollection.create([{userId: userId, password: hashedPassword, hint: hint}], {session});
-                const settingsResult = await settingsCollection.create([{userId: userId}], {session})
+                const credResult = await credCollection.create([{userId: userId, password: hashedPassword, hint: hint, 
+                                                                 additional_attributes: {
+                                                                     created_at: timeStamp,
+                                                                     updated_at: timeStamp
+                                                                 }
+                                                                }], {session});
+                const settingsResult = await settingsCollection.create([{userId: userId, 
+                                                                         additional_attributes: {
+                                                                             created_at: timeStamp,
+                                                                             updated_at: timeStamp
+                                                                         }}], {session})
                 
                 if (!!!credResult || credResult.length === 0 || !!!settingsResult || settingsResult.length === 0) {
                     await session.abortTransaction();
