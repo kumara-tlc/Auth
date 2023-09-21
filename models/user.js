@@ -4,8 +4,7 @@ const { GetUnixTimestamp, GenerateUniqueId } = require('../core/common');
 const userSchema = new mongoose.Schema({
     _id: {
         type: String,
-        required: true,
-        default: GenerateUniqueId()
+        required: true
     },
     name: {
         type: String,
@@ -28,12 +27,10 @@ const userSchema = new mongoose.Schema({
             default: false
         },
         created_at: {
-            type: Number,
-            default: GetUnixTimestamp()
+            type: Number
         },
         updated_at: {
-            type: Number,
-            default: GetUnixTimestamp()
+            type: Number
         }
     }
 }, { versionKey: false });
