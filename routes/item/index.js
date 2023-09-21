@@ -2,7 +2,7 @@ const express = require('express');
 const item = express.Router();
 const itemCollection = require('../../models/item');
 const projectCollection = require('../../models/project');
-const { GetUnixTimestamp } = require('../../core/common');
+const { GetUnixTimestamp, GenerateUniqueId } = require('../../core/common');
 const mongoose = require("mongoose");
 const authMiddleware = require('../../core/auth');
 
@@ -17,11 +17,16 @@ item.post('/', authMiddleware, async (req, res) => {
             return res.status(400).send({ success: false, message: "Project Data Not Found" });
         }
 
+        const timeStamp = GetUnixTimestamp();
+
         const result = await itemCollection.create({
             ...requestData,
+            _id: GenerateUniqueId();
             additional_attributes: {
                 created_by: req.user._id,
-                updated_by: req.user._id
+                created_at: timeStamp,
+                updated_by: req.user._id,
+                updated_at: timeStamp
             }
         });
         if (!!!result) {
