@@ -4,8 +4,7 @@ const { GetUnixTimestamp, GenerateUniqueId } = require('../core/common');
 const itemSchema = new mongoose.Schema({
     _id: {
         type: String,
-        required: true,
-        default: GenerateUniqueId()
+        required: true
     },
     name: {
         type: String,
@@ -39,16 +38,14 @@ const itemSchema = new mongoose.Schema({
             required: true,
         },
         created_at: {
-            type: Number,
-            default: GetUnixTimestamp()
+            type: Number
         },
         updated_by: {
             type: String,
             required: true,
         },
         updated_at: {
-            type: Number,
-            default: GetUnixTimestamp()
+            type: Number
         }
     }
 }, { versionKey: false });
