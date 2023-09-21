@@ -1,7 +1,7 @@
 const express = require('express');
 const project = express.Router();
 const projectCollection = require('../../models/project');
-const { GetUnixTimestamp } = require('../../core/common');
+const { GetUnixTimestamp, GenerateUniqueId } = require('../../core/common');
 const mongoose = require("mongoose");
 const authMiddleware = require('../../core/auth');
 
@@ -9,11 +9,15 @@ const authMiddleware = require('../../core/auth');
 project.post('/', authMiddleware, async (req, res) => {
     try {
         let requestData = req.body;
+        const timeStamp = GetUnixTimestamp();
         const result = await projectCollection.create({
             ...requestData,
+            _id: GenerateUniqueId(),
             additional_attributes: {
                 created_by: req.user._id,
-                updated_by: req.user._id
+                crated_at: timeStamp,
+                updated_by: req.user._id,
+                updated_at: timeStamp
             }
         });
         if (!!!result) {
