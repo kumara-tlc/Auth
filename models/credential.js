@@ -1,11 +1,9 @@
 const mongoose = require('mongoose');
-const { GetUnixTimestamp, GenerateUniqueId } = require('../core/common');
 
 const credentialSchema = new mongoose.Schema({
     _id: {
         type: String,
-        required: true,
-        default: GenerateUniqueId()
+        required: true
     },
     userId: {
         type: String,
@@ -27,12 +25,10 @@ const credentialSchema = new mongoose.Schema({
             default: false
         },
         created_at: {
-            type: Number,
-            default: GetUnixTimestamp()
+            type: Number
         },
         updated_at: {
-            type: Number,
-            default: GetUnixTimestamp()
+            type: Number
         }
     }
 }, { versionKey: false });
