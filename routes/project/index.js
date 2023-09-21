@@ -9,7 +9,6 @@ const authMiddleware = require('../../core/auth');
 project.post('/', authMiddleware, async (req, res) => {
     try {
         let requestData = req.body;
-
         const result = await projectCollection.create({
             ...requestData,
             additional_attributes: {
@@ -36,7 +35,7 @@ project.post('/', authMiddleware, async (req, res) => {
 project.get('/:id', authMiddleware, async (req, res) => {
     try {
         let { id } = req.params;
-        const result = await projectCollection.findOne({_id : id, "additional_attributes.is_deleted" : false});
+        const result = await projectCollection.findOne({_id : id, "additional_attributes.is_deleted" : false, "additional_attributes.created_by" : req.user._id});
         if (!!!result) {
             return res.status(400).send({success: false, message: "Failed to Get Project"});
         }
@@ -53,7 +52,7 @@ project.get('/:id', authMiddleware, async (req, res) => {
 /* get project list */
 project.get('/', authMiddleware, async (req, res) => {
     try {
-        const result = await projectCollection.find({ "additional_attributes.is_deleted" : false });
+        const result = await projectCollection.find({ "additional_attributes.is_deleted" : false, "additional_attributes.created_by" : req.user._id });
         if (!!!result) {
             return res.status(400).send({success: false, message: "Failed to Get Project"});
         }
@@ -71,7 +70,7 @@ project.get('/', authMiddleware, async (req, res) => {
 project.put('/:id', authMiddleware, async (req, res) => {
     try {
         let { id } = req.params;
-        let existingData = await projectCollection.findOne({_id: id, "additional_attributes.is_deleted" : false});
+        let existingData = await projectCollection.findOne({_id: id, "additional_attributes.is_deleted" : false, "additional_attributes.created_by" : req.user._id});
 
         if (!!!existingData) {
             return res.status(400).send({success: false, message: "Failed to Get Project"});

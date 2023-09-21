@@ -11,7 +11,7 @@ item.post('/', authMiddleware, async (req, res) => {
     try {
         let requestData = req.body;
 
-        const projectData = await projectCollection.findOne({ _id: requestData.project_id, "additional_attributes.is_deleted" : false });
+        const projectData = await projectCollection.findOne({ _id: requestData.project_id, "additional_attributes.is_deleted" : false, "additional_attributes.created_by" : req.user._id });
 
         if(!projectData){
             return res.status(400).send({ success: false, message: "Project Data Not Found" });
@@ -43,7 +43,7 @@ item.post('/', authMiddleware, async (req, res) => {
 item.get('/:id', authMiddleware, async (req, res) => {
     try {
         let { id } = req.params;
-        const result = await itemCollection.findOne({_id : id, "additional_attributes.is_deleted" : false});
+        const result = await itemCollection.findOne({_id : id, "additional_attributes.is_deleted" : false, "additional_attributes.created_by" : req.user._id});
         if (!!!result) {
             return res.status(400).send({success: false, message: "Failed to Get Item"});
         }
@@ -60,7 +60,7 @@ item.get('/:id', authMiddleware, async (req, res) => {
 /* get item list */
 item.get('/', authMiddleware, async (req, res) => {
     try {
-        const result = await itemCollection.find({ "additional_attributes.is_deleted" : false });
+        const result = await itemCollection.find({ "additional_attributes.is_deleted" : false, "additional_attributes.created_by" : req.user._id });
         if (!!!result) {
             return res.status(400).send({success: false, message: "Failed to Get Item"});
         }
@@ -78,7 +78,7 @@ item.get('/', authMiddleware, async (req, res) => {
 item.put('/:id', authMiddleware, async (req, res) => {
     try {
         let { id } = req.params;
-        let existingData = await itemCollection.findOne({_id: id, "additional_attributes.is_deleted" : false});
+        let existingData = await itemCollection.findOne({_id: id, "additional_attributes.is_deleted" : false, "additional_attributes.created_by" : req.user._id});
 
         if (!!!existingData) {
             return res.status(400).send({success: false, message: "Failed to Get Item"});
@@ -86,7 +86,7 @@ item.put('/:id', authMiddleware, async (req, res) => {
 
         const requestData = req.body;
 
-        const projectData = await projectCollection.findOne({ _id: requestData.project_id, "additional_attributes.is_deleted" : false });
+        const projectData = await projectCollection.findOne({ _id: requestData.project_id, "additional_attributes.is_deleted" : false, "additional_attributes.created_by" : req.user._id });
 
         if(!projectData){
             return res.status(400).send({success: false, message: "Project Data Not Found"});
@@ -99,7 +99,7 @@ item.put('/:id', authMiddleware, async (req, res) => {
         existingData["additional_attributes"]["updated_by"] = req.user._id;
         existingData["additional_attributes"]["updated_at"] = GetUnixTimestamp();
 
-        const result = await itemCollection.updateOne({_id: id, "additional_attributes.is_deleted" : false}, existingData);
+        const result = await itemCollection.updateOne({_id: id, "additional_attributes.is_deleted" : false, "additional_attributes.created_by" : req.user._id}, existingData);
         if (!!!result) {
             return res.status(400).send({success: false, message: "Failed to Update Item"});
         }
@@ -120,7 +120,7 @@ item.put('/:id', authMiddleware, async (req, res) => {
 item.delete('/:id', authMiddleware, async (req, res) => {
     try {
         let { id } = req.params;
-        let existingData = await itemCollection.findOne({_id: id, "additional_attributes.is_deleted" : false});
+        let existingData = await itemCollection.findOne({_id: id, "additional_attributes.is_deleted" : false, "additional_attributes.created_by" : req.user._id});
 
         if (!!!existingData) {
             return res.status(400).send({success: false, message: "Failed to Get Item"});

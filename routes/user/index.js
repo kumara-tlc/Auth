@@ -139,6 +139,41 @@ user.get('/details', authMiddleware, (req, res) => {
     res.status(200).send({success: true, data: req.user});
 });
 
+
+/* update user details */
+user.put('/details', authMiddleware, async (req, res) => {
+    try{
+        let existingData = await userCollection.findOne({ _id: req.user._id, "additional_attributes.is_deleted" : false });
+
+        if(!existingData){
+            return res.status(400).send({ success: false, message: "User Data Not Found" });
+        }
+
+        const requestData = req.body;
+
+        Object.entries(requestData).map((val) => {
+            existingData[val[0]] = val[1];
+        })
+
+        existingData["additional_attributes"]["updated_by"] = req.user._id;
+        existingData["additional_attributes"]["updated_at"] = GetUnixTimestamp();
+
+        const result = await userCollection.updateOne({_id: req.user._id, "additional_attributes.is_deleted" : false}, existingData);
+        if (!!!result) {
+            return res.status(400).send({success: false, message: "Failed to Update User Details"});
+        }
+
+        return res.status(200).send({success: true, message: "success"});
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).send({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+
 /* get user system settings */
 user.get('/system/settings', authMiddleware, async (req, res) => {
     try{
